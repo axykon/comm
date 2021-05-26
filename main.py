@@ -15,9 +15,6 @@ class City:
         self.x = x
         self.y = y
 
-    def __str__(self):
-        return str(self.id)
-
 class BruteForceStrategy():
     def __init__(self, cities: list, distance_matrix: list, canvas: Canvas):
         self.cities = cities
@@ -46,7 +43,7 @@ class BruteForceStrategy():
                 lbl_iteration.configure(text="Итерация: " + str(self.iteration))
                 cur_len = 0
                 self.cur_path.append(cities[0])
-                for i in range(len(self.cur_path) - 1):
+                for i in range(len(self.cur_path)):
                     cur_len += distance_matrix[self.cur_path[i].id][self.cur_path[i-1].id]
                 if cur_len < self.min_len or self.min_len == None:
                     self.min_len = cur_len
@@ -73,6 +70,14 @@ class GeneticStrategy():
         self.cur_gen = 0
         self.max_gen = int(ent_max_gen.get())
 
+    def path_length(self, path):
+        res = 0
+        path.append(0)
+        for i in range(len(path) - 1):
+            res += distance_matrix[path[i]][path[i+1]]
+        path.pop(len(path) - 1)
+        return round(res, 2)
+
     def start(self):
         # генерируем популяцию
         self.population.append(list(range(cities_count)))
@@ -88,15 +93,64 @@ class GeneticStrategy():
             self.cur_gen += 1
             lbl_generation.configure(text="Поколение: " + str(self.cur_gen))
 
-            self.population.sort()
+            # Рисуем кратчайший
+            if self.path_length(self.population[0]) < self.min_len:
+                self.min_len = self.path_length(self.population[0])
+                self.min_path = self.population[0].copy()
+                self.draw_path(self.population[0])
+                lbl_length_2.configure(text="Длина: " + str(self.min_len))
+
+            # Скрещивание (скрещиваем половину особей)
+            for n in range(int(0.5 * len(self.population))):
+                d1 = d2 = 0
+                while d1 == d2:
+                    d1, d2 = randint(0, len(self.population) - 1), randint(0, len(self.population) - 1)
+
+                cut_point = randint(1, len(self.population[0]) - 2)
+
+                child = []
+                for m in range(2):
+                    if m == 1:
+                        t = d1
+                        d1 = d2
+                        d2 = t
+                    for i in range(0, cut_point):
+                        child.append(self.population[d1][i])
+                    for j in range(cut_point, len(self.population[0])):
+                        if self.population[d2][j] not in child:
+                            child.append(self.population[d2][j])
+                    if len(child) < len(self.population[0]):
+                        for k in range(cut_point, len(self.population[0])):
+                            if self.population[d1][k] not in child:
+                                child.append(self.population[d1][k])
+                    self.population.append(child)
+                    child = []
+
+            # Мутации
+
+            for h in self.population:
+                if randint(0, 100) <= int(ent_mutation_percentage.get()):
+                    d1, d2 = randint(1, len(self.population[0]) - 1), randint(1, len(self.population[0]) - 1)
+                    t = h[d1]
+                    h[d1] = h[d2]
+                    h[d2] = t
+
+            self.population = sorted(self.population, key=self.path_length)
+
+            # Удаляем половину особей (самых плохо приспособленых)
+
+            for i in range(len(self.population)-1, int(0.5*len(self.population)) - 1, -1):
+                self.population.pop(i)
 
             window.update()
 
     def draw_path(self, path: list):
         self.canvas.delete(ALL)
+        path.append(0)
         for i in range(len(path) - 1):
             draw_city(cities[path[i]], is_first=i == 0)
             self.canvas.create_line(cities[path[i]].x, cities[path[i]].y, cities[path[i + 1]].x, cities[path[i + 1]].y)
+        path.pop(len(path)-1)
 
 def place_city(event_place_city):
     global cities_count
