@@ -1,6 +1,7 @@
 from tkinter import *
-from random import randint
 from tkinter import messagebox
+from tkinter.ttk import *
+from random import randint
 
 cities = []
 cities_count = 0
@@ -8,6 +9,12 @@ distance_matrix = []
 
 # Логические флаги
 is_already_started = False
+
+class Algorithm:
+    def __init__(self, name):
+        self.name = name
+
+algorithms = [Algorithm('Brute-force'), Algorithm('Genetic')]
 
 class City:
     def __init__(self, id, x, y):
@@ -149,7 +156,8 @@ class GeneticStrategy():
         path.append(0)
         for i in range(len(path) - 1):
             draw_city(cities[path[i]], is_first=i == 0)
-            self.canvas.create_line(cities[path[i]].x, cities[path[i]].y, cities[path[i + 1]].x, cities[path[i + 1]].y)
+            self.canvas.create_line(cities[path[i]].x, cities[path[i]].y, cities[path[i + 1]].x, cities[path[i + 1]].y,
+                                    width=2, arrow='last')
         path.pop(len(path)-1)
 
 def place_city(event_place_city):
@@ -168,8 +176,8 @@ def draw_city(city: City, is_first = False):
     color = 'white'
     if is_first:
         color = 'red'
-    map_canvas_1.create_oval(city.x - 5, city.y - 5, city.x + 5, city.y + 5, fill=color)
-    map_canvas_2.create_oval(city.x - 5, city.y - 5, city.x + 5, city.y + 5, fill=color)
+    map_canvas_1.create_oval(city.x - 5, city.y - 5, city.x + 5, city.y + 5, fill=color, width=2)
+    map_canvas_2.create_oval(city.x - 5, city.y - 5, city.x + 5, city.y + 5, fill=color, width=2)
 
 def reset_maps():
     global is_already_started, cities, cities_count
@@ -222,58 +230,88 @@ def start():
 
 # интерфейс
 window = Tk()
-window['bg'] = 'gray92'
-window.title('Genetic')
-window.geometry('1000x350')
-window.resizable(width=False, height=False)
+window.title('Comm')
+
+s = Style()
+s.theme_use('clam')
+
+root = Frame(window)
+root.grid(row=0, column=0, sticky=(N, E, S, W))
+window.rowconfigure(0, weight=1)
+window.columnconfigure(0, weight=1)
+
+start = Button(root, text='Start')
+start.grid(row=0, column=0, sticky='w')
+stop = Button(root, text='Stop')
+stop.grid(row=0, column=1, sticky='w')
+root.rowconfigure(0, pad=10)
+root.columnconfigure(0, pad=10)
+
+row = 1
+for alg in algorithms:
+    c = Canvas(root, width=400, height=400, background='white')
+    c.grid(row=row, column=0, columnspan=2, padx=(10, 10), pady=(10, 10), sticky=(N, E, S, W))
+    c.create_text(5, 5, text=alg.name, anchor='nw', font='TkFixedFont', fill='black')
+
+    p = Frame(root)
+    p.grid(row=row, column=3, sticky='nesw')
+
+    s = Scale(c)
+    c.create_window(5, 50, anchor='nw', window=s)
+
+
+    root.rowconfigure(row, weight=1)
+    row += 1
+
+root.columnconfigure(1, weight=1)
 
 # Карты
-map_canvas_1 = Canvas(window, height=300, width=300, background='white')
-map_canvas_1.place(x=20, y=20)
-map_canvas_1.bind("<Button 1>", place_city)
+# map_canvas_1 = Canvas(window, height=300, width=300, background='white')
+# map_canvas_1.place(x=20, y=20)
+# map_canvas_1.bind("<Button 1>", place_city)
 
-map_canvas_2 = Canvas(window, height=300, width=300, background='white')
-map_canvas_2.place(x=340, y=20)
-map_canvas_2.bind("<Button 1>", place_city)
+# map_canvas_2 = Canvas(window, height=300, width=300, background='white')
+# map_canvas_2.place(x=340, y=20)
+# map_canvas_2.bind("<Button 1>", place_city)
 
-# Подписи под картами
-lbl_iteration = Label(window, text='Итерация: ', background='gray92')
-lbl_iteration.place(x=20, y=325)
+# # Подписи под картами
+# lbl_iteration = Label(window, text='Итерация: ', background='gray92')
+# lbl_iteration.place(x=20, y=325)
 
-lbl_length_1 = Label(window, text='Длина пути: ', background='gray92')
-lbl_length_1.place(x=165, y=325)
+# lbl_length_1 = Label(window, text='Длина пути: ', background='gray92')
+# lbl_length_1.place(x=165, y=325)
 
-lbl_generation = Label(window, text='Поколение: ', background='gray92')
-lbl_generation.place(x=340, y=325)
+# lbl_generation = Label(window, text='Поколение: ', background='gray92')
+# lbl_generation.place(x=340, y=325)
 
-lbl_length_2 = Label(window, text='Длина пути: ', background='gray92')
-lbl_length_2.place(x=485, y=325)
+# lbl_length_2 = Label(window, text='Длина пути: ', background='gray92')
+# lbl_length_2.place(x=485, y=325)
 
-# Ввод данных (подписи к полям)
-lbl_population = Label(window, text='Популяция', background='gray92')
-lbl_population.place(x=660, y=20)
+# # Ввод данных (подписи к полям)
+# lbl_population = Label(window, text='Популяция', background='gray92')
+# lbl_population.place(x=660, y=20)
 
-lbl_mutation_percentage = Label(window, text='Процент мутаций', background='gray92')
-lbl_mutation_percentage.place(x=660, y=60)
+# lbl_mutation_percentage = Label(window, text='Процент мутаций', background='gray92')
+# lbl_mutation_percentage.place(x=660, y=60)
 
-lbl_max_gen = Label(window, text='Максимальное кол-во поколений', background='gray92')
-lbl_max_gen.place(x=660, y=100)
+# lbl_max_gen = Label(window, text='Максимальное кол-во поколений', background='gray92')
+# lbl_max_gen.place(x=660, y=100)
 
-# Ввод данных (поля для ввода)
-ent_population = Entry(width=20)
-ent_population.place(x=860, y=20)
+# # Ввод данных (поля для ввода)
+# ent_population = Entry(width=20)
+# ent_population.place(x=860, y=20)
 
-ent_mutation_percentage = Entry(width=20)
-ent_mutation_percentage.place(x=860, y=60)
+# ent_mutation_percentage = Entry(width=20)
+# ent_mutation_percentage.place(x=860, y=60)
 
-ent_max_gen = Entry(width=20)
-ent_max_gen.place(x=860, y=100)
+# ent_max_gen = Entry(width=20)
+# ent_max_gen.place(x=860, y=100)
 
-# Кнопки
-btn_reset = Button(text='Сброс', width=30, height=2, command=reset_maps)
-btn_reset.place(x=660, y=220)
+# # Кнопки
+# btn_reset = Button(text='Сброс', width=30, height=2, command=reset_maps)
+# btn_reset.place(x=660, y=220)
 
-btn_start = Button(text='Старт', width=30, height=2, command=start)
-btn_start.place(x=660, y=265)
+# btn_start = Button(text='Старт', width=30, height=2, command=start)
+# btn_start.place(x=660, y=265)
 
 window.mainloop()
